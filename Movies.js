@@ -21,7 +21,7 @@ var MovieSchema = new Schema({
         }
     },
     year_released: {
-        type: "int",
+        type: String,
         required: "Year Released is required",
         minimum: 1903,
         maximum: 2021,
