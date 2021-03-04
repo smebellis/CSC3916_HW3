@@ -162,7 +162,7 @@ router.route('/movies')
                         return res.json(err);
                     }
                 }
-                res.json({sucess: true, message: 'Successfully created new user'});
+                res.json({success: true, message: 'Successfully created new Movie'});
             });
         }
     })

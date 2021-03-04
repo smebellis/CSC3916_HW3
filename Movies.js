@@ -32,12 +32,18 @@ var MovieSchema = new Schema({
         required: true,
         enum: ["Action", "Adventure", "Comedy", "Drama", "Fantasy", "Horror", "Mystery", "Thriller", "Western"]
     },
-    actors:
-        [
-            {actor_name: {type: String, required: true}, character_name: {type: String, required: true}},
-            {actor_name: {type: String, required: true}, character_name: {type: String, required: true}},
-            {actor_name: {type: String, required: true}, character_name: {type: String, required: true}}
-        ]
+    actors: {
+        type: Array,
+        required: "At least 3 actors with character names required",
+        actor_name: {
+            type: String,
+            required : true
+        },
+        character_name : {
+            type : String,
+            required: true
+        }
+    }
 });
 
 MovieSchema.pre('save', function(next){
