@@ -12,6 +12,7 @@ var authJwtController = require('./auth_jwt');
 var jwt = require('jsonwebtoken');
 var cors = require('cors');
 var User = require('./Users');
+var Movie = require('./Movies');
 
 var app = express();
 app.use(cors());
@@ -92,56 +93,82 @@ router.route('/signin')
         })
     })
 
-
-
-
-
 router.route('/movies')
     .delete(authController.isAuthenticated, function(req, res) {
-        console.log(req.body);
-        res = res.status(200);
-        if (req.get('Content-Type')) {
-            res = res.type(req.get('Content-Type'));
+        if(!req.body){
+            res.json({success:false, message: "Provide a movie to delete"});
+        }else{
+            Movie.findOne(req.body, function(err, res){
+                if(err){
+                    res.json(err);
+                }else{
+                    Movie.deleteOne(req.body, function(err, res){
+                        if(err){
+                            res.json(err);
+                        }
+                        res.json({success: true, message: "Successfully deleted Movie"});
+                    })
+                }
+            })
         }
-        var o = getJSONObjectForMovieRequirement(req);
-        o.msg = "movie deleted";
-        res.json(o);
 
     }
     )
     .put(authJwtController.isAuthenticated, function(req, res) {
-        console.log(req.body);
-        res = res.status(200);
-        if (req.get('Content-Type')) {
-            res = res.type(req.get('Content-Type'));
+        if(!req.body.movie_title || !req.body.update_title){
+            res.json({success:false, message: "Provide movie title to update, and new title"});
+        }else{
+            Movie.findByIdAndUpdate({title: req.body.movie_title}, {title: req.body.update_title}, function (err) {
+                if(err){
+                    res.status(403).json({success:false, message: "Can not update Movie"});
+                }else{
+                    res.status(200).json({success: true, message: "Movie updated successfully"});
+                }
+            });
         }
-        var o = getJSONObjectForMovieRequirement(req);
-        o.msg = "movie updated";
-        res.json(o);
     }
     )
-    .get(function (req, res) {
-        console.log(req.body);
-        res = res.status(200);
-        if(req.get('Content-Type')){
-            res = res.type(req.get('Content-Type'));
+    .get(authJwtController.isAuthenticated, function (req, res) {
+        if (!req.body){
+            res.json({success:false, message: "Provide a movie to display"});
+        }else{
+            Movie.findOne(req.body).select("title year_released genre actors"), function(err, movie){
+                if(err){
+                    res.json(err);
+                }else{
+                    res.json({sucess: true, message: "Movie found"});
+                }
+            }
         }
-        var o = getJSONObjectForMovieRequirement(req);
-        o.msg = "GET movies";
-        res.json(o);
     }
     )
-    .post(function (req, res) {
+    .post(authJwtController.isAuthenticated, function (req, res) {
         console.log(req.body);
-        res = res.status(200);
-        if (req.get('Content-Type')) {
-            res = res.type(req.get('Content-Type'));
+        if (!req.body.title || !req.body.year_released || !req.body.genre || !req.body.actors[0] || !req.body.actors[1] || !req.body.actors[2]) {
+            res.json({success: false, message: "Title, Year_Released, Genre and 3 Actors are required"});
+        } else {
+            var movie = new Movie();
+
+            movie.title = req.body.title;
+            movie.year_released = req.body.year_released;
+            movie.genre = req.body.genre;
+            movie.actors = req.body.actors;
+
+            movie.save(function (err) {
+                if (err) {
+                    if (err.code == 11000)
+                        return res.json({success: false, message: "A user with that username already exists"});
+                    else {
+                        return res.json(err);
+                    }
+                }
+                res.json({sucess: true, message: 'Successfully created new user'});
+            });
         }
-        var o = getJSONObjectForMovieRequirement(req);
-        o.msg = "movie saved";
-        res.json(o);
-    }
-    )
+    })
+
+
+
     .all(function(req, res){
         res.json({success: false, msg: "This HTTP method is not supported."});
 
