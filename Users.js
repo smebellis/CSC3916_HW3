@@ -4,7 +4,12 @@ var bcrypt = require('bcrypt-nodejs');
 
 mongoose.Promise = global.Promise;
 
-mongoose.connect((process.env.DB, {useNewURLParser: true}));
+try {
+    mongoose.connect(process.env.DB, {useNewURLParser: true, useUnifiedTopology: true}, () =>
+        console.log("connected"));
+}catch(error){
+    console.log("could not connect");
+}
 mongoose.set('useCreateIndex', true);
 
 //User schema
@@ -32,7 +37,7 @@ UserSchema.pre('save', function(next){
 UserSchema.methods.comparePassword = function (password, callback){
     var user = this;
 
-    bcrypt.compare(password. user.password, function(err, isMatch){
+    bcrypt.compare(password, user.password, function(err, isMatch){
         callback(isMatch);
     })
 }
