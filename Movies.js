@@ -32,11 +32,10 @@ var MovieSchema = new Schema({
         required: true,
         enum: ["Action", "Adventure", "Comedy", "Drama", "Fantasy", "Horror", "Mystery", "Thriller", "Western"]
     },
-    actors: {
-        type: Array,
-        required: "At least 3 actors with character names required",
-        minItems: 3,
-    }
+    actors: [{
+        actor_name : String,
+        character_name : String
+        }]
 });
 
 MovieSchema.pre('save', function(next){
