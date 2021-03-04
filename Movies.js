@@ -35,14 +35,7 @@ var MovieSchema = new Schema({
     actors: {
         type: Array,
         required: "At least 3 actors with character names required",
-        actor_name: {
-            type: String,
-            required : true
-        },
-        character_name : {
-            type : String,
-            required: true
-        }
+        minItems: 3,
     }
 });
 
