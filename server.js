@@ -1,5 +1,5 @@
 /*
-CSC3916 HW2
+CSC3916 HW3
 File: Server.js
 Description: Web API scaffolding for Movie API
  */
@@ -7,7 +7,6 @@ Description: Web API scaffolding for Movie API
 var express = require('express');
 var bodyParser = require('body-parser');
 var passport = require('passport');
-var authController = require('./auth');
 var authJwtController = require('./auth_jwt');
 var jwt = require('jsonwebtoken');
 var cors = require('cors');
@@ -94,35 +93,34 @@ router.route('/signin')
     })
 
 router.route('/movies')
-    .delete(authController.isAuthenticated, function(req, res) {
-        if(!req.body){
+    .delete(authJwtController.isAuthenticated, function(req, res) {
+        if(!req.body.title){
             res.json({success:false, message: "Provide a movie to delete"});
         }else{
-            Movie.findOne(req.body, function(err, res){
+            Movie.findOneAndDelete(req.body.title, function(err, movie) {
                 if(err){
-                    res.json(err);
-                }else{
-                    Movie.deleteOne(req.body, function(err, res){
-                        if(err){
-                            res.json(err);
-                        }
-                        res.json({success: true, message: "Successfully deleted Movie"});
-                    })
+                    res.status(403).json({success:false, message: "Error can not delete Movie"});
+                }else if(!movie){
+                    res.status(403).json({success: false, message: "Can not find Movie"});
+                }else {
+                    res.status(200).json({success: true, message: "Movie Deleted"});
                 }
             })
-        }
+            }
 
     }
     )
     .put(authJwtController.isAuthenticated, function(req, res) {
-        if(!req.body.movie_title || !req.body.update_title){
+        if(!req.body.title || !req.body.update_title){
             res.json({success:false, message: "Provide movie title to update, and new title"});
         }else{
-            Movie.findByIdAndUpdate({title: req.body.movie_title}, {title: req.body.update_title}, function (err) {
+            Movie.findOneAndUpdate(req.body.title, req.body.update_title, function(err, movie) {
                 if(err){
                     res.status(403).json({success:false, message: "Can not update Movie"});
+                }else if(!movie){
+                    res.status(403).json({success: false, message: "Can not find Movie"});
                 }else{
-                    res.status(200).json({success: true, message: "Movie updated successfully"});
+                    res.status(200).json({success: true, message:"Successfully updated title"});
                 }
             });
         }
@@ -132,13 +130,17 @@ router.route('/movies')
         if (!req.body){
             res.json({success:false, message: "Provide a movie to display"});
         }else{
-            Movie.findOne(req.body).select("title year_released genre actors"), function(err, movie){
-                if(err){
-                    res.json(err);
-                }else{
-                    res.json({sucess: true, message: "Movie found"});
+            Movie.find(req.body).select("title year_released genre actors").exec(function(err, movie) {
+                if (err) {
+                    res.status(403).json({success: false, message: "Unable to find movie"});
                 }
-            }
+                if (movie) {
+                    res.status(200).json({success: true, message: "Found Movie", Movie: movie})
+                } else {
+                    res.status(404).json({success: false, message: "Movie not found"});
+
+                }
+            })
         }
     }
     )
@@ -158,16 +160,14 @@ router.route('/movies')
                 if (err) {
                     if (err.code == 11000)
                         return res.json({success: false, message: "A user with that username already exists"});
-                    else {
+                    else
                         return res.json(err);
-                    }
                 }
-                res.json({success: true, message: 'Successfully created new Movie'});
-            });
+            })
+            res.json({success: true, msg: 'Movie Created.'});
+
         }
     })
-
-
 
     .all(function(req, res){
         res.json({success: false, msg: "This HTTP method is not supported."});
